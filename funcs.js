@@ -7,6 +7,7 @@ var path = require('path')
  * (string): string
  */
 function encode(data) {
+    //console.log("---------------" + data)
     return (new Buffer(data)).toString('base64')
 }
 
@@ -54,11 +55,14 @@ module.exports.loadDb = function(dbFile, cb) {
  * (Object, string): Object
  */
 module.exports.findInbox = function(db, encodedName) {
+    //console.log(db, encodedName)
     var messages = db.messages
+
     return {
         dir: path.dirname(db.file),
         messages: Object.keys(messages).reduce(function(acc, key) {
             if (messages[key].to === encodedName) {
+                // console.log(messages[key].to + " encoded " + encodedName)
                 return acc.concat({
                     hash: key,
                     lastHash: messages[key].last,
@@ -67,6 +71,8 @@ module.exports.findInbox = function(db, encodedName) {
             } else { return acc }
         }, [])
     }
+
+
 }
 
 /**
@@ -75,16 +81,21 @@ module.exports.findInbox = function(db, encodedName) {
  * ({ messages: Array<Object> }, string): string
  */
 module.exports.findNextMessage = function(inbox, lastHash) {
+    //console.log(inbox.messages[1].hash)
     // find the message which comes after lastHash
+
     var found
     for (var i = 0; i < inbox.messages.length; i += 1) {
+
         if (inbox.messages[i].lastHash === lastHash) {
             found = i
             break
         }
     }
 
-    // read and decode the message
+    p = path.join(inbox.dir, inbox.messages[found].hash)
+    var msg = fs.readFileSync(p, 'utf8')
+        // read and decode the message
     return 'from: ' + decode(inbox.messages[found].from) + '\n---\n' +
-        decode(fs.readFile(path.join(inbox.dir, inbox.messages[found].hash), 'utf8'))
+        decode(msg)
 }
